@@ -19,26 +19,55 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Monorepo structure** with three top-level source directories sharing a single `package.json`:
 
 - `client/` — React 18 SPA (Vite, wouter for routing, Tailwind CSS, shadcn/ui components)
-- `server/` — Express server with raw WebSocket (ws library, NOT socket.io client-side)
-- `shared/` — Shared types and Drizzle schema (`schema.ts`) used by both client and server
+- `server/` — Express server with WebSocket (ws library in noServer mode)
+- `shared/` — Shared types, Drizzle schema, and WebSocket event contracts (`schema.ts`)
 
 **Path aliases** (configured in tsconfig.json and vite.config.ts):
 - `@/*` → `client/src/*`
 - `@shared/*` → `shared/*`
 
-**Real-time communication**: Uses native WebSocket (`ws` library), not Socket.IO on the client. The client hook `use-socket.ts` wraps the browser WebSocket API with a custom event emitter pattern (`emit`/`on`/`off`). Server WebSocket endpoint is at `/ws`.
+### Server
 
-**Storage**: Currently uses in-memory storage (`MemStorage` class in `server/storage.ts`), implementing the `IStorage` interface. Drizzle + PostgreSQL schema is defined in `shared/schema.ts` but the DB backend is not wired up — the app runs entirely from memory. `DATABASE_URL` env var is only needed for `db:push`.
+The server uses **dependency injection** — all services are instantiated in `server/routes.ts` and passed to handler factories. No global singletons.
 
-**AI validation**: Player names and submitted words are validated via Groq API (`llama3-70b-8192` model) in `server/ai-validator.ts`. Falls back to basic regex/blocklist validation if Groq is unavailable. Requires `GROQ_API_KEY` env var.
+- `server/services/` — Business logic layer:
+  - `RoomService` — Room creation, joining, leaving, host transfer
+  - `GameService` — Word submission, give-up, round advancement, scoring, builds per-player `GameState`
+  - `ValidationService` — AI validation via Groq API (`llama3-70b-8192`), falls back to regex/blocklist. Requires `GROQ_API_KEY` env var
+- `server/ws/ws-server.ts` — WebSocket server setup using `noServer: true` with manual HTTP upgrade on `/ws` path only (critical: avoids conflicting with Vite HMR)
+- `server/ws/handlers/` — Handler factories (`room-handlers.ts`, `game-handlers.ts`, `chat-handlers.ts`) return `Map<string, MessageHandler>`, assembled in `routes.ts`
+- `server/ws/broadcast.ts` — `Broadcaster` sends events to room players; `sendGameStateToRoom` builds personalized state per player
+- `server/errors/game-errors.ts` — Typed error classes (`GameError`, `ValidationError`, etc.) with `userMessage` for client-safe error messages
+- `server/config/constants.ts` — Scoring, room limits, alphabet constants
+- `server/storage.ts` — `IStorage` interface + `MemStorage` in-memory implementation. Drizzle schema exists but DB is not wired up
 
-**Game flow** (all in `server/routes.ts`):
+### Client
+
+Uses **Context + useReducer** for state management — no Redux, no React Query.
+
+- `client/src/context/` — `GameContext` with `gameReducer` manages screen transitions, player identity, connection state. Actions dispatched from hooks
+- `client/src/hooks/use-socket.ts` — Low-level WebSocket hook: multi-handler support (`Set<handler>` per event), auto-reconnect with exponential backoff, message queue when disconnected. `on()` returns an unsubscribe function
+- `client/src/hooks/use-game-socket.ts` — High-level hook bridging socket ↔ context. Registers all server event handlers, dispatches actions to reducer. Exposes typed action creators (`createRoom`, `joinRoom`, `submitWord`, etc.)
+- `client/src/pages/game.tsx` — Screen router: reads `state.screen` from context and renders the appropriate component
+- `client/src/components/game/` — Game UI split into focused components (game-header, alphabet-progress, player-scores, word-submission-form, recent-words, game-chat)
+- `client/src/components/room/` — Room flow components (theme-selection, room-setup)
+- `client/src/components/error-boundary.tsx` — React Error Boundary wrapping the app
+- `client/src/config/constants.ts` — Client-side constants (player limits, display limits)
+
+### Shared contracts (`shared/schema.ts`)
+
+- `ServerToClientEvents` / `ClientToServerEvents` — Typed WebSocket event interfaces used by both client and server
+- `GameState` — Includes `myPlayerId` so each client knows its own identity (set by `GameService.buildGameStateForPlayer`)
+- Drizzle tables: `players`, `rooms`, `gameWords`, `chatMessages`
+
+### Game flow
+
 1. Host creates room (gets 4-letter code) → players join via code → host starts game
 2. All players submit a word simultaneously for the current letter (no turn-based ordering)
 3. Once all active players have submitted or given up, the next letter begins
 4. Max 6 players per room
 
-**Client screen flow** (state machine in `client/src/pages/game.tsx`):
+**Client screen flow** (state machine driven by reducer):
 `home` → `theme-selection` / `room-setup` → `lobby` → `game` → `results`
 
 ## Key Conventions
@@ -47,3 +76,4 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Server always runs on port 5000
 - Room codes are 4 uppercase letters
 - No REST API endpoints — all game logic flows through WebSocket events
+- WebSocket server must use `noServer: true` mode to coexist with Vite HMR on the same HTTP server
