@@ -81,13 +81,14 @@ export class ValidationService {
   }
 
   async validateGameWord(word: string, theme: string, letter: string, existingWords: string[] = []): Promise<ValidationResult> {
-    const normalizedWord = word.trim().toLowerCase();
+    // Normalisation simple : minuscules, retrait -s/-x final (filet de sécurité)
+    const normalize = (w: string) => w.trim().toLowerCase().replace(/[sx]$/, '');
+    const normalizedWord = normalize(word);
 
-    // Vérification de doublon (même mot déjà soumis ce round)
-    if (existingWords.some(w => w.toLowerCase() === normalizedWord)) {
+    if (existingWords.some(w => normalize(w) === normalizedWord)) {
       return {
         isValid: false,
-        reason: 'Ce mot a déjà été proposé par un autre joueur pour cette lettre'
+        reason: 'Ce mot (ou une variante) a déjà été proposé par un autre joueur'
       };
     }
 
@@ -105,6 +106,20 @@ export class ValidationService {
 
       const themeDesc = themeDescriptions[theme] || `un élément spécifique de la catégorie "${theme}"`;
 
+      // Construire la section des mots déjà utilisés
+      let existingWordsSection = '';
+      if (existingWords.length > 0) {
+        existingWordsSection = `
+
+Mots déjà proposés par d'autres joueurs ce tour : [${existingWords.join(', ')}]
+6. Le mot NE DOIT PAS être une variante d'un mot déjà proposé. Sont considérées comme variantes :
+   - Le pluriel/singulier (abeille/abeilles)
+   - Le féminin/masculin (lion/lionne, ours/ourse)
+   - Le diminutif ou petit (chat/chaton, ours/ourson)
+   - Toute forme dérivée du même radical (renard/renarde/renardeau)
+Si le mot est une variante d'un mot déjà listé, refuse-le.`;
+      }
+
       const completion = await this.groq.chat.completions.create({
         messages: [
           {
@@ -116,9 +131,9 @@ Vérifie si le mot proposé correspond à TOUS ces critères :
 2. Est ${themeDesc}
 3. Est un mot français valide et correctement orthographié
 4. Est approprié pour un jeu familial
-5. N'est PAS un terme générique désignant la catégorie elle-même
+5. N'est PAS un terme générique désignant la catégorie elle-même${existingWordsSection}
 
-Sois strict : refuse les mots inventés, les termes trop vagues, et les noms de catégorie.
+Sois strict : refuse les mots inventés, les termes trop vagues, les noms de catégorie, et les variantes de mots déjà proposés.
 
 Réponds UNIQUEMENT en JSON :
 {
