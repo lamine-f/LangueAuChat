@@ -45,7 +45,6 @@ export class MemStorage implements IStorage {
   private gameWords: Map<number, GameWord> = new Map();
   private chatMessages: Map<number, ChatMessage> = new Map();
   
-  private roomIdCounter = 1;
   private playerIdCounter = 1;
   private gameWordIdCounter = 1;
   private chatMessageIdCounter = 1;
@@ -53,7 +52,15 @@ export class MemStorage implements IStorage {
   // Room methods
   async createRoom(insertRoom: InsertRoom): Promise<Room> {
     const room: Room = {
-      ...insertRoom,
+      id: insertRoom.id,
+      code: insertRoom.code,
+      theme: insertRoom.theme,
+      currentLetter: insertRoom.currentLetter ?? 'A',
+      currentPlayerIndex: insertRoom.currentPlayerIndex ?? 0,
+      gameStarted: insertRoom.gameStarted ?? false,
+      gameEnded: insertRoom.gameEnded ?? false,
+      roundInProgress: insertRoom.roundInProgress ?? false,
+      winnerId: insertRoom.winnerId ?? null,
       createdAt: new Date()
     };
     this.rooms.set(room.id, room);
@@ -85,8 +92,14 @@ export class MemStorage implements IStorage {
   async createPlayer(insertPlayer: InsertPlayer): Promise<Player> {
     const id = this.playerIdCounter++;
     const player: Player = {
-      ...insertPlayer,
       id,
+      name: insertPlayer.name,
+      roomId: insertPlayer.roomId,
+      score: insertPlayer.score ?? 1000,
+      isHost: insertPlayer.isHost ?? false,
+      isEliminated: insertPlayer.isEliminated ?? false,
+      hasSubmittedWord: insertPlayer.hasSubmittedWord ?? false,
+      socketId: insertPlayer.socketId ?? null,
       createdAt: new Date()
     };
     this.players.set(id, player);
@@ -126,8 +139,13 @@ export class MemStorage implements IStorage {
   async createGameWord(insertWord: InsertGameWord): Promise<GameWord> {
     const id = this.gameWordIdCounter++;
     const gameWord: GameWord = {
-      ...insertWord,
       id,
+      roomId: insertWord.roomId,
+      playerId: insertWord.playerId,
+      letter: insertWord.letter,
+      word: insertWord.word ?? null,
+      isGiveUp: insertWord.isGiveUp ?? false,
+      penaltyAmount: insertWord.penaltyAmount ?? 0,
       createdAt: new Date()
     };
     this.gameWords.set(id, gameWord);
@@ -164,4 +182,3 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();

@@ -1,5 +1,5 @@
 {
-  "watch": ["server"],
+  "watch": ["server", "shared"],
   "ext": "ts",
   "exec": "cross-env tsx server/index.ts"
 }
