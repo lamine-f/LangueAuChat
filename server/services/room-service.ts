@@ -21,6 +21,7 @@ export interface LeaveResult {
   roomId: string;
   roomDeleted: boolean;
   newHostId?: number;
+  winnerId?: number;
 }
 
 export class RoomService {
@@ -146,6 +147,14 @@ export class RoomService {
     if (player.isHost) {
       newHostId = remainingPlayers[0].id;
       await this.storage.updatePlayer(newHostId, { isHost: true });
+    }
+
+    // Si la partie est en cours et qu'il ne reste qu'un joueur, il gagne
+    const room = await this.storage.getRoomById(roomId);
+    if (room && room.gameStarted && !room.gameEnded && remainingPlayers.length === 1) {
+      const winner = remainingPlayers[0];
+      await this.storage.updateRoom(roomId, { gameEnded: true, winnerId: winner.id });
+      return { roomId, roomDeleted: false, newHostId, winnerId: winner.id };
     }
 
     return { roomId, roomDeleted: false, newHostId };

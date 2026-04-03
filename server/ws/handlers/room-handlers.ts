@@ -44,6 +44,9 @@ export function createRoomHandlers(
     await broadcaster.broadcastToRoom(result.roomId, 'playerLeft', ctx.playerId);
 
     if (!result.roomDeleted) {
+      if (result.winnerId) {
+        await broadcaster.broadcastToRoom(result.roomId, 'gameEnded', result.winnerId);
+      }
       await broadcaster.sendGameStateToRoom(result.roomId);
     }
   });
