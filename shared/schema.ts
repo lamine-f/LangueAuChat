@@ -96,6 +96,7 @@ export interface GameState {
   players: Player[];
   recentWords: GameWord[];
   chatMessages: ChatMessage[];
+  myPlayerId: number;
   isMyTurn: boolean;
   nextPenalty: number;
   canSubmitWord: boolean;

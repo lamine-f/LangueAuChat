@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Copy, Play, Users, LogOut } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { generatePlayerInitials, getThemeInfo } from '@/lib/game-utils';
+import { MAX_PLAYERS_PER_ROOM, MIN_PLAYERS_TO_START } from '@/config/constants';
 import type { GameState } from '@shared/schema';
 
 interface GameLobbyProps {
@@ -34,7 +35,7 @@ export default function GameLobby({ gameState, onStartGame, onLeaveRoom, isHost 
     }
   };
 
-  const canStartGame = gameState.players.length >= 2;
+  const canStartGame = gameState.players.length >= MIN_PLAYERS_TO_START;
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-md">
@@ -55,7 +56,7 @@ export default function GameLobby({ gameState, onStartGame, onLeaveRoom, isHost 
               Joueurs
             </CardTitle>
             <Badge variant="outline">
-              {gameState.players.length}/6
+              {gameState.players.length}/{MAX_PLAYERS_PER_ROOM}
             </Badge>
           </div>
         </CardHeader>
@@ -109,7 +110,7 @@ export default function GameLobby({ gameState, onStartGame, onLeaveRoom, isHost 
 
       {!canStartGame && (
         <div className="text-center text-sm text-gray-600 mb-6">
-          En attente d'au moins {2 - gameState.players.length} joueur(s) supplémentaire(s)...
+          En attente d'au moins {MIN_PLAYERS_TO_START - gameState.players.length} joueur(s) supplémentaire(s)...
         </div>
       )}
 

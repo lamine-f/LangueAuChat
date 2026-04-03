@@ -1,4 +1,5 @@
 import { gameThemes, type GameTheme } from '@shared/schema';
+import { ALPHABET, PLAYER_NAME_MAX_LENGTH, ROOM_CODE_LENGTH } from '@/config/constants';
 
 export const getThemeInfo = (theme: GameTheme) => {
   return gameThemes[theme];
@@ -18,10 +19,9 @@ export const formatScore = (score: number): string => {
 };
 
 export const getAlphabetProgress = (currentLetter: string): Array<{letter: string, status: 'completed' | 'current' | 'upcoming'}> => {
-  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  const currentIndex = alphabet.indexOf(currentLetter);
-  
-  return alphabet.split('').map((letter, index) => ({
+  const currentIndex = ALPHABET.indexOf(currentLetter);
+
+  return ALPHABET.split('').map((letter, index) => ({
     letter,
     status: index < currentIndex ? 'completed' : 
             index === currentIndex ? 'current' : 'upcoming'
@@ -29,15 +29,26 @@ export const getAlphabetProgress = (currentLetter: string): Array<{letter: strin
 };
 
 export const validateRoomCode = (code: string): boolean => {
-  return /^[A-Z]{4}$/.test(code);
+  const pattern = new RegExp(`^[A-Z]{${ROOM_CODE_LENGTH}}$`);
+  return pattern.test(code);
 };
 
 export const formatPlayerName = (name: string): string => {
-  return name.trim().substring(0, 20);
+  return name.trim().substring(0, PLAYER_NAME_MAX_LENGTH);
 };
 
 export const isGameEnded = (currentLetter: string, activePlayers: number): boolean => {
-  return currentLetter === 'Z' || activePlayers <= 1;
+  return currentLetter === ALPHABET[ALPHABET.length - 1] || activePlayers <= 1;
+};
+
+export const formatOrdinal = (n: number): string => {
+  if (n === 1) return '1er';
+  return `${n}ème`;
+};
+
+export const validateWordForLetter = (word: string, currentLetter: string): boolean => {
+  if (!word.trim()) return false;
+  return word.trim().toLowerCase().startsWith(currentLetter.toLowerCase());
 };
 
 export const calculateTimeRemaining = (startTime: Date, maxDuration: number): number => {

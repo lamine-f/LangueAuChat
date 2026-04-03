@@ -139,7 +139,8 @@ export class GameService {
       players,
       recentWords,
       chatMessages,
-      isMyTurn: true, // Pas de concept de tour individuel
+      myPlayerId: playerId,
+      isMyTurn: true,
       nextPenalty,
       canSubmitWord,
       playersWaiting

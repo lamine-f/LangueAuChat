@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Trophy, RotateCcw, Home, Clock, Target } from 'lucide-react';
-import { generatePlayerInitials, formatScore, formatGameDuration } from '@/lib/game-utils';
+import { generatePlayerInitials, formatScore, formatGameDuration, formatOrdinal } from '@/lib/game-utils';
 import type { GameState } from '@shared/schema';
 
 interface GameResultsProps {
@@ -26,9 +26,14 @@ export default function GameResults({
   
   // Calculate game stats
   const totalWords = gameState.recentWords.filter(w => !w.isGiveUp).length;
-  const gameStartTime = gameState.room.createdAt;
-  const gameDuration = gameStartTime 
-    ? Math.floor((Date.now() - new Date(gameStartTime).getTime()) / 1000 / 60)
+  // Utiliser le timestamp du premier mot comme proxy du début de partie
+  const firstWord = gameState.recentWords.length > 0
+    ? gameState.recentWords.reduce((earliest, w) =>
+        new Date(w.createdAt!).getTime() < new Date(earliest.createdAt!).getTime() ? w : earliest
+      )
+    : null;
+  const gameDuration = firstWord?.createdAt
+    ? Math.floor((Date.now() - new Date(firstWord.createdAt).getTime()) / 1000 / 60)
     : 0;
 
   return (
@@ -93,7 +98,7 @@ export default function GameResults({
                         ? 'Éliminé' 
                         : isWinner 
                           ? 'Gagnant' 
-                          : `${index + 1}${index === 1 ? 'ème' : 'ème'} place`
+                          : `${formatOrdinal(index + 1)} place`
                       }
                     </div>
                   </div>
