@@ -1,8 +1,11 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import dotenv from "dotenv";
+import pg from "pg";
+import { drizzle } from "drizzle-orm/node-postgres";
 
-import { MemStorage } from "./storage";
+import { type IStorage, MemStorage } from "./storage";
+import { DbStorage } from "./db-storage";
 import { ValidationService } from "./services/validation-service";
 import { RoomService } from "./services/room-service";
 import { GameService } from "./services/game-service";
@@ -11,14 +14,27 @@ import { Broadcaster } from "./ws/broadcast";
 import { createRoomHandlers } from "./ws/handlers/room-handlers";
 import { createGameHandlers } from "./ws/handlers/game-handlers";
 import { createChatHandlers } from "./ws/handlers/chat-handlers";
+import { log } from "./vite";
 
 dotenv.config();
+
+function createStorage(): IStorage {
+  const databaseUrl = process.env.DATABASE_URL;
+  if (databaseUrl) {
+    const pool = new pg.Pool({ connectionString: databaseUrl });
+    const db = drizzle(pool);
+    log("Utilisation de PostgreSQL");
+    return new DbStorage(db);
+  }
+  log("Utilisation du stockage en mémoire (pas de DATABASE_URL)");
+  return new MemStorage();
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
 
   // Instanciation des dépendances
-  const storage = new MemStorage();
+  const storage = createStorage();
   const validationService = new ValidationService(process.env.GROQ_API_KEY);
   const connectionManager = new ConnectionManager();
   const roomService = new RoomService(storage, validationService);
