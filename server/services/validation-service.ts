@@ -106,17 +106,31 @@ export class ValidationService {
 
       const themeDesc = themeDescriptions[theme] || `un élément spécifique de la catégorie "${theme}"`;
 
-      // Construire la section des mots déjà utilisés
+      // Exemples de variantes adaptés au thème
+      const variantExamples: Record<string, string> = {
+        animaux: `   - Le pluriel/singulier (abeille/abeilles)
+   - Le féminin/masculin (lion/lionne, ours/ourse)
+   - Le diminutif ou petit (chat/chaton, ours/ourson)
+   - Toute forme dérivée du même radical (renard/renarde/renardeau)`,
+        fruits: `   - Le pluriel/singulier (pomme/pommes, cerise/cerises)
+   - Les variétés trop proches d'un même fruit (orange/orangette)
+   - Toute forme dérivée du même mot (citron/citronnier — le citronnier n'est pas un fruit)`,
+        legumes: `   - Le pluriel/singulier (carotte/carottes, tomate/tomates)
+   - Les variétés trop proches d'un même légume
+   - Toute forme dérivée du même mot (pomme de terre/patate si l'un est déjà proposé)`,
+        pays: `   - Les variantes orthographiques d'un même pays (Émirats/Emirats)
+   - Le nom du pays dans une autre langue (Deutschland/Allemagne)
+   - Les formes abrégées ou complètes (USA/États-Unis)`
+      };
+
       let existingWordsSection = '';
       if (existingWords.length > 0) {
+        const examples = variantExamples[theme] || '   - Le pluriel/singulier, les formes dérivées, les variantes du même mot';
         existingWordsSection = `
 
 Mots déjà proposés par d'autres joueurs ce tour : [${existingWords.join(', ')}]
 6. Le mot NE DOIT PAS être une variante d'un mot déjà proposé. Sont considérées comme variantes :
-   - Le pluriel/singulier (abeille/abeilles)
-   - Le féminin/masculin (lion/lionne, ours/ourse)
-   - Le diminutif ou petit (chat/chaton, ours/ourson)
-   - Toute forme dérivée du même radical (renard/renarde/renardeau)
+${examples}
 Si le mot est une variante d'un mot déjà listé, refuse-le.`;
       }
 
