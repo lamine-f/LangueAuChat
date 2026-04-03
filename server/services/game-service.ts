@@ -58,7 +58,13 @@ export class GameService {
       throw new InvalidWordError(room.currentLetter);
     }
 
-    const wordValidation = await this.validationService.validateGameWord(word, room.theme, room.currentLetter);
+    // Récupérer les mots déjà soumis pour cette lettre (détection de doublons)
+    const allWords = await this.storage.getGameWordsByRoomId(room.id);
+    const currentRoundWords = allWords
+      .filter(w => w.letter === room.currentLetter && !w.isGiveUp && w.word)
+      .map(w => w.word!);
+
+    const wordValidation = await this.validationService.validateGameWord(word, room.theme, room.currentLetter, currentRoundWords);
     if (!wordValidation.isValid) {
       throw new GameError(wordValidation.reason || 'Mot non valide pour cette catégorie');
     }

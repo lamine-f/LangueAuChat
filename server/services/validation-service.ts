@@ -80,28 +80,51 @@ export class ValidationService {
     }
   }
 
-  async validateGameWord(word: string, theme: string, letter: string): Promise<ValidationResult> {
+  async validateGameWord(word: string, theme: string, letter: string, existingWords: string[] = []): Promise<ValidationResult> {
+    const normalizedWord = word.trim().toLowerCase();
+
+    // Vérification de doublon (même mot déjà soumis ce round)
+    if (existingWords.some(w => w.toLowerCase() === normalizedWord)) {
+      return {
+        isValid: false,
+        reason: 'Ce mot a déjà été proposé par un autre joueur pour cette lettre'
+      };
+    }
+
     try {
       if (!this.groq) {
         return this.validateWordBasic(word, letter);
       }
 
+      const themeDescriptions: Record<string, string> = {
+        animaux: "un animal spécifique (espèce ou race). Les termes génériques comme 'animal', 'bête', 'bestiole', 'créature' ne sont PAS valides",
+        fruits: "un fruit spécifique (espèce ou variété). Les termes génériques comme 'fruit' ne sont PAS valides",
+        legumes: "un légume spécifique (espèce ou variété). Les termes génériques comme 'légume' ne sont PAS valides",
+        pays: "un pays reconnu existant dans le monde. Les termes génériques comme 'pays', 'nation', 'état' ne sont PAS valides"
+      };
+
+      const themeDesc = themeDescriptions[theme] || `un élément spécifique de la catégorie "${theme}"`;
+
       const completion = await this.groq.chat.completions.create({
         messages: [
           {
             role: "system",
-            content: `Tu es un validateur de mots pour le jeu "Langue au chat".
-          Vérifie si le mot proposé correspond aux critères :
-          1. Commence par la lettre demandée
-          2. Appartient à la catégorie/thème spécifié
-          3. Est un mot français valide
-          4. Est approprié pour un jeu familial
+            content: `Tu es un validateur strict de mots pour le jeu "Langue au chat".
 
-          Réponds UNIQUEMENT en JSON :
-          {
-            "isValid": true/false,
-            "reason": "raison si refusé"
-          }`
+Vérifie si le mot proposé correspond à TOUS ces critères :
+1. Commence par la lettre "${letter}"
+2. Est ${themeDesc}
+3. Est un mot français valide et correctement orthographié
+4. Est approprié pour un jeu familial
+5. N'est PAS un terme générique désignant la catégorie elle-même
+
+Sois strict : refuse les mots inventés, les termes trop vagues, et les noms de catégorie.
+
+Réponds UNIQUEMENT en JSON :
+{
+  "isValid": true/false,
+  "reason": "raison si refusé"
+}`
           },
           {
             role: "user",
