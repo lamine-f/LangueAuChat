@@ -1,8 +1,9 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { useSocket } from './use-socket';
 import { useSound } from './use-sound';
 import { useGameContext } from '@/context/GameContext';
 import { useToast } from './use-toast';
+import { gameStorage } from '@/lib/storage';
 import type { GameTheme } from '@shared/schema';
 
 export function useGameSocket() {
@@ -10,6 +11,7 @@ export function useGameSocket() {
   const { isConnected, connect, disconnect, emit, on } = useSocket();
   const { toast } = useToast();
   const { play } = useSound();
+  const rejoinAttempted = useRef(false);
 
   // Synchroniser l'état de connexion avec le contexte
   useEffect(() => {
@@ -22,10 +24,25 @@ export function useGameSocket() {
     return () => disconnect();
   }, [connect, disconnect]);
 
+  // Tenter le rejoin quand la connexion est établie
+  useEffect(() => {
+    if (!isConnected || rejoinAttempted.current) return;
+    rejoinAttempted.current = true;
+
+    const savedPlayerId = gameStorage.getPlayerId();
+    if (savedPlayerId) {
+      emit('rejoinRoom', { playerId: savedPlayerId });
+    }
+  }, [isConnected, emit]);
+
   // Enregistrement des event handlers
   useEffect(() => {
     const unsubs = [
       on('gameStateUpdate', (gameState) => {
+        // Persister la session
+        gameStorage.setPlayerId(gameState.myPlayerId);
+        gameStorage.setRoomId(gameState.room.id);
+
         dispatch({ type: 'SET_GAME_STATE', gameState });
       }),
 
@@ -72,6 +89,13 @@ export function useGameSocket() {
       on('error', (message, suggestedName) => {
         play('error');
         dispatch({ type: 'SET_ERROR', error: message });
+
+        // Si le rejoin échoue, nettoyer le storage
+        const savedPlayerId = gameStorage.getPlayerId();
+        if (savedPlayerId && !state.gameState) {
+          gameStorage.clear();
+        }
+
         toast({
           title: 'Erreur',
           description: message,
@@ -87,7 +111,7 @@ export function useGameSocket() {
     ];
 
     return () => unsubs.forEach(unsub => unsub());
-  }, [on, dispatch, toast, play, state.gameState?.players]);
+  }, [on, dispatch, toast, play, state.gameState?.players, state.gameState]);
 
   // Action creators
   const createRoom = useCallback((playerName: string, theme: GameTheme) => {
@@ -116,6 +140,7 @@ export function useGameSocket() {
 
   const leaveRoom = useCallback(() => {
     emit('leaveRoom', undefined as any);
+    gameStorage.clear();
     dispatch({ type: 'RESET' });
   }, [emit, dispatch]);
 

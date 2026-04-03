@@ -13,6 +13,13 @@ export class ConnectionManager {
   private playerToSocket = new Map<number, WebSocket>();
 
   register(socket: WebSocket, playerId: number): void {
+    // Nettoyer l'ancien socket s'il existe (ex: rejoin après refresh)
+    const oldSocket = this.playerToSocket.get(playerId);
+    if (oldSocket && oldSocket !== socket) {
+      this.socketToPlayer.delete(oldSocket);
+      oldSocket.close();
+    }
+
     this.socketToPlayer.set(socket, playerId);
     this.playerToSocket.set(playerId, socket);
   }

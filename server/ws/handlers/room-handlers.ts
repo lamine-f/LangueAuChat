@@ -27,6 +27,14 @@ export function createRoomHandlers(
     await broadcaster.sendGameStateToRoom(room.id);
   });
 
+  handlers.set('rejoinRoom', async (ctx, data) => {
+    const { playerId } = data;
+    const { room, player } = await roomService.rejoinRoom(playerId);
+
+    ctx.setPlayerId(player.id);
+    await broadcaster.sendGameStateToRoom(room.id);
+  });
+
   handlers.set('leaveRoom', async (ctx) => {
     if (!ctx.playerId) return;
 

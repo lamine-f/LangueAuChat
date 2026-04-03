@@ -110,6 +110,22 @@ export class RoomService {
     return { room, player };
   }
 
+  async rejoinRoom(playerId: number): Promise<{ room: Room; player: Player }> {
+    const player = await this.storage.getPlayerById(playerId);
+    if (!player) {
+      throw new PlayerNotFoundError();
+    }
+
+    const room = await this.storage.getRoomById(player.roomId);
+    if (!room) {
+      // La room n'existe plus, nettoyer le joueur
+      await this.storage.deletePlayer(playerId);
+      throw new RoomNotFoundError();
+    }
+
+    return { room, player };
+  }
+
   async leaveRoom(playerId: number): Promise<LeaveResult> {
     const player = await this.storage.getPlayerById(playerId);
     if (!player) {

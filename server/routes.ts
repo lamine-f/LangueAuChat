@@ -40,17 +40,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Callback de déconnexion
-  const onDisconnect = async (playerId: number) => {
-    try {
-      const result = await roomService.leaveRoom(playerId);
-      await broadcaster.broadcastToRoom(result.roomId, 'playerLeft', playerId);
-      if (!result.roomDeleted) {
-        await broadcaster.sendGameStateToRoom(result.roomId);
-      }
-    } catch {
-      // Le joueur n'existe peut-être plus
-    }
+  // Callback de déconnexion — ne supprime PAS le joueur pour permettre le rejoin
+  const onDisconnect = async (_playerId: number) => {
+    // Le joueur reste dans la room pour pouvoir se reconnecter (refresh).
+    // La suppression ne se fait que sur leaveRoom explicite.
   };
 
   // Démarrage du serveur WebSocket

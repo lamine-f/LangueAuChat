@@ -120,6 +120,7 @@ export interface ServerToClientEvents {
 export interface ClientToServerEvents {
   createRoom: (data: { playerName: string; theme: GameTheme }) => void;
   joinRoom: (data: { roomCode: string; playerName: string }) => void;
+  rejoinRoom: (data: { playerId: number }) => void;
   startGame: () => void;
   submitWord: (word: string) => void;
   giveUp: () => void;
