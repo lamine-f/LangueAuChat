@@ -1,5 +1,6 @@
 import { useEffect, useCallback } from 'react';
 import { useSocket } from './use-socket';
+import { useSound } from './use-sound';
 import { useGameContext } from '@/context/GameContext';
 import { useToast } from './use-toast';
 import type { GameTheme } from '@shared/schema';
@@ -8,6 +9,7 @@ export function useGameSocket() {
   const { state, dispatch } = useGameContext();
   const { isConnected, connect, disconnect, emit, on } = useSocket();
   const { toast } = useToast();
+  const { play } = useSound();
 
   // Synchroniser l'état de connexion avec le contexte
   useEffect(() => {
@@ -28,6 +30,7 @@ export function useGameSocket() {
       }),
 
       on('gameStarted', () => {
+        play('gameStart');
         toast({
           title: 'Partie commencée !',
           description: 'La partie vient de commencer',
@@ -35,6 +38,7 @@ export function useGameSocket() {
       }),
 
       on('gameEnded', (winnerId) => {
+        play('victory');
         const winner = state.gameState?.players.find(p => p.id === winnerId);
         toast({
           title: 'Partie terminée !',
@@ -43,6 +47,7 @@ export function useGameSocket() {
       }),
 
       on('playerJoined', (player) => {
+        play('playerJoin');
         toast({
           title: 'Nouveau joueur',
           description: `${player.name} a rejoint la partie`,
@@ -57,6 +62,7 @@ export function useGameSocket() {
       }),
 
       on('letterChanged', (letter) => {
+        play('newRound');
         toast({
           title: 'Nouvelle lettre !',
           description: `La lettre est maintenant : ${letter}`,
@@ -64,6 +70,7 @@ export function useGameSocket() {
       }),
 
       on('error', (message, suggestedName) => {
+        play('error');
         dispatch({ type: 'SET_ERROR', error: message });
         toast({
           title: 'Erreur',
@@ -80,7 +87,7 @@ export function useGameSocket() {
     ];
 
     return () => unsubs.forEach(unsub => unsub());
-  }, [on, dispatch, toast, state.gameState?.players]);
+  }, [on, dispatch, toast, play, state.gameState?.players]);
 
   // Action creators
   const createRoom = useCallback((playerName: string, theme: GameTheme) => {

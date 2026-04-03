@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useSound } from '@/hooks/use-sound';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,6 +35,7 @@ export default function WordSubmissionForm({
 }: WordSubmissionFormProps) {
   const [currentWord, setCurrentWord] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { play } = useSound();
 
   const themeInfo = getThemeInfo(theme as any);
   const isValidWord = validateWordForLetter(currentWord, currentLetter);
@@ -45,6 +47,7 @@ export default function WordSubmissionForm({
     setIsSubmitting(true);
     try {
       onSubmitWord(currentWord.trim());
+      play('success');
       setCurrentWord('');
     } finally {
       setIsSubmitting(false);
@@ -55,6 +58,7 @@ export default function WordSubmissionForm({
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
+      play('giveup');
       onGiveUp();
     } finally {
       setIsSubmitting(false);
