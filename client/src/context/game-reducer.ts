@@ -37,6 +37,17 @@ export function gameReducer(state: GameContextState, action: GameAction): GameCo
     case 'SET_ERROR':
       return { ...state, error: action.error };
 
+    case 'ADD_CHAT_MESSAGE': {
+      if (!state.gameState) return state;
+      return {
+        ...state,
+        gameState: {
+          ...state.gameState,
+          chatMessages: [...state.gameState.chatMessages, action.message],
+        },
+      };
+    }
+
     case 'RESET':
       return { ...initialGameState, isConnected: state.isConnected };
 

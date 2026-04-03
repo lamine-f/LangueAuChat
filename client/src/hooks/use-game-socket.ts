@@ -86,6 +86,10 @@ export function useGameSocket() {
         });
       }),
 
+      on('chatMessage', (message) => {
+        dispatch({ type: 'ADD_CHAT_MESSAGE', message });
+      }),
+
       on('error', (message, suggestedName) => {
         play('error');
         dispatch({ type: 'SET_ERROR', error: message });

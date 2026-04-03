@@ -1,4 +1,4 @@
-import type { GameState } from '@shared/schema';
+import type { GameState, ChatMessage } from '@shared/schema';
 
 export type GameScreen = 'home' | 'theme-selection' | 'room-setup' | 'lobby' | 'game' | 'results';
 
@@ -16,6 +16,7 @@ export type GameAction =
   | { type: 'SET_GAME_STATE'; gameState: GameState }
   | { type: 'SET_CONNECTED'; isConnected: boolean }
   | { type: 'SET_ERROR'; error: string | null }
+  | { type: 'ADD_CHAT_MESSAGE'; message: ChatMessage & { playerName: string } }
   | { type: 'RESET' };
 
 export const initialGameState: GameContextState = {
