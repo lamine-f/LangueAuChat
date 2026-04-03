@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { MessageCircle, ChevronUp, ChevronDown, Send } from 'lucide-react';
+import { useSound } from '@/hooks/use-sound';
 import type { ChatMessage, Player } from '@shared/schema';
 
 interface GameChatProps {
@@ -16,6 +17,7 @@ export default function GameChat({ messages, players, onSendMessage }: GameChatP
   const [isExpanded, setIsExpanded] = useState(false);
   const [currentMessage, setCurrentMessage] = useState('');
   const [unreadCount, setUnreadCount] = useState(0);
+  const { play } = useSound();
   const lastSeenCount = useRef(messages.length);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -40,6 +42,7 @@ export default function GameChat({ messages, players, onSendMessage }: GameChatP
     e.preventDefault();
     if (!currentMessage.trim()) return;
 
+    play('chatSend');
     onSendMessage(currentMessage.trim());
     setCurrentMessage('');
   };

@@ -6,7 +6,7 @@ import giveupSound from '@/assets/sounds/giveup.mp3';
 import playerJoinSound from '@/assets/sounds/player-join.mp3';
 import victorySound from '@/assets/sounds/victory.mp3';
 
-export type SoundName = 'success' | 'error' | 'giveup' | 'newRound' | 'playerJoin' | 'gameStart' | 'victory';
+export type SoundName = 'success' | 'error' | 'giveup' | 'newRound' | 'playerJoin' | 'gameStart' | 'victory' | 'chatSend' | 'chatReceive';
 
 // Synthétiser un son court via Web Audio API
 function createSynthSound(
@@ -66,6 +66,18 @@ const synthSounds: Partial<Record<SoundName, () => void>> = {
     { freq: 392, start: 0.3, duration: 0.1 },     // Sol4
     { freq: 523, start: 0.42, duration: 0.35 },   // Do5
   ], 0.15),
+
+  // Chat send : petit pop aigu
+  chatSend: createSynthSound('sine', [
+    { freq: 880, start: 0, duration: 0.08 },      // La5
+    { freq: 1100, start: 0.06, duration: 0.06 },  // Do#6
+  ], 0.15),
+
+  // Chat receive : petit plop grave
+  chatReceive: createSynthSound('sine', [
+    { freq: 660, start: 0, duration: 0.08 },      // Mi5
+    { freq: 520, start: 0.06, duration: 0.08 },   // Do5
+  ], 0.12),
 };
 
 // Fichiers MP3 mappés par nom

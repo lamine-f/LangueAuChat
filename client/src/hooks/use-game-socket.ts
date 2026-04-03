@@ -88,6 +88,14 @@ export function useGameSocket() {
 
       on('chatMessage', (message) => {
         dispatch({ type: 'ADD_CHAT_MESSAGE', message });
+        // Notifier seulement les messages des autres joueurs
+        if (message.playerId !== state.currentPlayerId) {
+          play('chatReceive');
+          toast({
+            title: `💬 ${message.playerName}`,
+            description: message.message,
+          });
+        }
       }),
 
       on('error', (message, suggestedName) => {
