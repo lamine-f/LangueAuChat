@@ -55,7 +55,7 @@ export class ValidationService {
             content: `Valide ce nom d'utilisateur : "${trimmedName}"`
           }
         ],
-        model: "llama3-70b-8192",
+        model: "llama-3.3-70b-versatile",
         temperature: 0.1,
         max_tokens: 200,
         response_format: { type: "json_object" }
@@ -108,7 +108,7 @@ export class ValidationService {
             content: `Mot: "${word}", Thème: "${theme}", Lettre: "${letter}"`
           }
         ],
-        model: "llama3-70b-8192",
+        model: "llama-3.3-70b-versatile",
         temperature: 0.1,
         max_tokens: 150,
         response_format: { type: "json_object" }
