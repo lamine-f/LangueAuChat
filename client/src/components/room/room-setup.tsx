@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft } from 'lucide-react';
-import { validateRoomCode, formatPlayerName } from '@/lib/game-utils';
+import { ArrowLeft, ClipboardPaste } from 'lucide-react';
+import { validateRoomCode, formatPlayerName, generateRandomName } from '@/lib/game-utils';
+import { useToast } from '@/hooks/use-toast';
 
 interface RoomSetupProps {
   onBack: () => void;
@@ -11,23 +12,19 @@ interface RoomSetupProps {
 }
 
 export default function RoomSetup({ onBack, onJoinRoom }: RoomSetupProps) {
-  const [playerName, setPlayerName] = useState('');
+  const [playerName, setPlayerName] = useState(generateRandomName);
   const [roomCode, setRoomCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const trimmedName = formatPlayerName(playerName);
     const trimmedCode = roomCode.trim().toUpperCase();
 
-    if (!trimmedName) {
-      return;
-    }
-
-    if (!validateRoomCode(trimmedCode)) {
-      return;
-    }
+    if (!trimmedName) return;
+    if (!validateRoomCode(trimmedCode)) return;
 
     setIsLoading(true);
     try {
@@ -40,6 +37,22 @@ export default function RoomSetup({ onBack, onJoinRoom }: RoomSetupProps) {
   const handleRoomCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.toUpperCase().replace(/[^A-Z]/g, '').substring(0, 4);
     setRoomCode(value);
+  };
+
+  const handlePaste = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      const cleaned = text.trim().toUpperCase().replace(/[^A-Z]/g, '').substring(0, 4);
+      if (cleaned) {
+        setRoomCode(cleaned);
+      }
+    } catch {
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de lire le presse-papiers',
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
@@ -72,19 +85,24 @@ export default function RoomSetup({ onBack, onJoinRoom }: RoomSetupProps) {
           <Label htmlFor="roomCode" className="text-sm font-medium text-gray-700">
             Code de la partie
           </Label>
-          <Input
-            id="roomCode"
-            type="text"
-            placeholder="ABCD"
-            value={roomCode}
-            onChange={handleRoomCodeChange}
-            className="mt-2 text-center text-2xl font-mono tracking-widest"
-            maxLength={4}
-            required
-          />
+          <div className="flex gap-2 mt-2">
+            <Input
+              id="roomCode"
+              type="text"
+              placeholder="ABCD"
+              value={roomCode}
+              onChange={handleRoomCodeChange}
+              className="text-center text-2xl font-mono tracking-widest"
+              maxLength={4}
+              required
+            />
+            <Button type="button" variant="outline" size="icon" onClick={handlePaste} className="shrink-0">
+              <ClipboardPaste className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
-        <Button 
+        <Button
           type="submit"
           disabled={!playerName.trim() || !validateRoomCode(roomCode) || isLoading}
           className="w-full"

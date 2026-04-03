@@ -41,7 +41,7 @@ export default function Game() {
       return (
         <ThemeSelection
           onBack={() => dispatch({ type: 'SET_SCREEN', screen: 'home' })}
-          onThemeSelect={(theme) => createRoom('Joueur' + Math.floor(Math.random() * 1000), theme)}
+          onThemeSelect={(theme, playerName) => createRoom(playerName, theme)}
         />
       );
 
@@ -70,6 +70,7 @@ export default function Game() {
           onSubmitWord={submitWord}
           onGiveUp={giveUp}
           onSendMessage={sendChatMessage}
+          onLeaveRoom={leaveRoom}
           currentPlayerId={currentPlayerId}
         />
       ) : null;

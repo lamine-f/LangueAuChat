@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowLeft, PawPrint, Apple, Carrot, Globe } from 'lucide-react';
 import { gameThemes, type GameTheme } from '@shared/schema';
+import { generateRandomName } from '@/lib/game-utils';
 
 interface ThemeSelectionProps {
   onBack: () => void;
-  onThemeSelect: (theme: GameTheme) => void;
+  onThemeSelect: (theme: GameTheme, playerName: string) => void;
 }
 
 const themeIcons = {
@@ -25,14 +28,11 @@ const themeColors = {
 
 export default function ThemeSelection({ onBack, onThemeSelect }: ThemeSelectionProps) {
   const [selectedTheme, setSelectedTheme] = useState<GameTheme | null>(null);
-
-  const handleThemeClick = (theme: GameTheme) => {
-    setSelectedTheme(theme);
-  };
+  const [playerName, setPlayerName] = useState(generateRandomName);
 
   const handleConfirm = () => {
-    if (selectedTheme) {
-      onThemeSelect(selectedTheme);
+    if (selectedTheme && playerName.trim()) {
+      onThemeSelect(selectedTheme, playerName.trim());
     }
   };
 
@@ -42,24 +42,41 @@ export default function ThemeSelection({ onBack, onThemeSelect }: ThemeSelection
         <Button variant="ghost" size="icon" onClick={onBack} className="mr-4">
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <h2 className="text-2xl font-bold text-gray-900">Choisir un thème</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Créer une partie</h2>
       </div>
 
-      <div className="space-y-3 mb-6">
+      <div className="mb-6">
+        <Label htmlFor="playerName" className="text-sm font-medium text-gray-700">
+          Votre nom
+        </Label>
+        <Input
+          id="playerName"
+          type="text"
+          placeholder="Entrez votre nom"
+          value={playerName}
+          onChange={(e) => setPlayerName(e.target.value)}
+          maxLength={20}
+          className="mt-2"
+          required
+        />
+      </div>
+
+      <Label className="text-sm font-medium text-gray-700">Choisir un thème</Label>
+      <div className="space-y-3 mt-2 mb-6">
         {Object.entries(gameThemes).map(([key, theme]) => {
           const themeKey = key as GameTheme;
           const Icon = themeIcons[themeKey];
           const isSelected = selectedTheme === themeKey;
-          
+
           return (
-            <Card 
+            <Card
               key={themeKey}
               className={`cursor-pointer transition-all ${
-                isSelected 
-                  ? 'border-primary border-2 bg-primary/5' 
+                isSelected
+                  ? 'border-primary border-2 bg-primary/5'
                   : 'border-gray-200 hover:border-primary/50'
               }`}
-              onClick={() => handleThemeClick(themeKey)}
+              onClick={() => setSelectedTheme(themeKey)}
             >
               <CardContent className="p-4">
                 <div className="flex items-center">
@@ -79,13 +96,13 @@ export default function ThemeSelection({ onBack, onThemeSelect }: ThemeSelection
         })}
       </div>
 
-      <Button 
+      <Button
         onClick={handleConfirm}
-        disabled={!selectedTheme}
+        disabled={!selectedTheme || !playerName.trim()}
         className="w-full"
         size="lg"
       >
-        Continuer
+        Créer la partie
       </Button>
     </div>
   );

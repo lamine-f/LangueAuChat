@@ -76,3 +76,12 @@ export const formatGameDuration = (minutes: number): string => {
   }
   return `${remainingMinutes}min`;
 };
+
+export const generateRandomName = (): string => {
+  const adjectives = ['Rapide', 'Malin', 'Sage', 'Joyeux', 'Brillant', 'Agile', 'Rusé', 'Vif', 'Hardi', 'Noble'];
+  const animals = ['Chat', 'Loup', 'Aigle', 'Panda', 'Tigre', 'Lynx', 'Faucon', 'Ours', 'Renard', 'Lion'];
+  const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+  const animal = animals[Math.floor(Math.random() * animals.length)];
+  const num = Math.floor(Math.random() * 99) + 1;
+  return `${adj}${animal}${num}`;
+};

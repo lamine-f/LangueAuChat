@@ -1,3 +1,5 @@
+import { Button } from '@/components/ui/button';
+import { LogOut } from 'lucide-react';
 import GameHeader from './game-header';
 import AlphabetProgress from './alphabet-progress';
 import PlayerScores from './player-scores';
@@ -11,6 +13,7 @@ interface ActiveGameProps {
   onSubmitWord: (word: string) => void;
   onGiveUp: () => void;
   onSendMessage: (message: string) => void;
+  onLeaveRoom: () => void;
   currentPlayerId: number;
 }
 
@@ -19,6 +22,7 @@ export default function ActiveGame({
   onSubmitWord,
   onGiveUp,
   onSendMessage,
+  onLeaveRoom,
   currentPlayerId,
 }: ActiveGameProps) {
   const currentPlayer = gameState.players.find(p => p.id === currentPlayerId);
@@ -26,7 +30,7 @@ export default function ActiveGame({
 
   return (
     <div className="container mx-auto px-4 py-4 max-w-md space-y-4">
-      <GameHeader room={gameState.room} />
+      <GameHeader room={gameState.room} playerName={currentPlayer?.name} />
 
       <AlphabetProgress currentLetter={gameState.room.currentLetter} />
 
@@ -56,6 +60,15 @@ export default function ActiveGame({
         players={gameState.players}
         onSendMessage={onSendMessage}
       />
+
+      <Button
+        variant="outline"
+        onClick={onLeaveRoom}
+        className="w-full"
+      >
+        <LogOut className="h-4 w-4 mr-2" />
+        Quitter la partie
+      </Button>
     </div>
   );
 }
